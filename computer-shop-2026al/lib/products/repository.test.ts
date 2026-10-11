@@ -47,7 +47,6 @@ describe("Product repository", () => {
       ...firstResult[0],
     };
 
-    // Sortujemy ponownie, tym razem po dacie.
     await getProducts("date");
 
     const secondResult = await getProducts("name");

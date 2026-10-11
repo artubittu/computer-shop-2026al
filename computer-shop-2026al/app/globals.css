@@ -59,3 +59,31 @@ textarea:focus-visible {
   outline: 3px solid currentColor;
   outline-offset: 3px;
 }
+
+.product-list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(250px, 1fr)
+  );
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.product-card {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.product-card h2 {
+  margin-top: 0;
+}
+
+.product-image {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  margin-bottom: 16px;
+}
