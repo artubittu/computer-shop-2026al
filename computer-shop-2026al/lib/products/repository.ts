@@ -16,9 +16,14 @@ const products: Product[] = validateProducts(rawProducts);
 
 export type ProductSort = "name" | "date";
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function getProducts(
   sort: ProductSort = "name"
 ): Promise<Product[]> {
+    await delay(2000);
   const result = [...products];
 
   if (sort === "name") {

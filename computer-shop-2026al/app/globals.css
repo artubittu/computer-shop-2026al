@@ -136,3 +136,33 @@ textarea:focus-visible {
   outline: 3px solid currentColor;
   outline-offset: 3px;
 }
+
+.loading-page {
+  padding: 24px 0;
+}
+
+.loading-page p {
+  margin-top: 16px;
+  font-size: 1.1rem;
+}
+
+.layout-counter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.layout-counter button {
+  padding: 6px 12px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.layout-counter button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
