@@ -93,3 +93,5 @@ console.log(
 );
 console.log(`Użyte ziarno: ${SEED}`);
 console.log(`Plik: ${outputPath}`);
+
+//node scripts/generate-products.mjs

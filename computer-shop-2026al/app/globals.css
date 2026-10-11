@@ -87,3 +87,52 @@ textarea:focus-visible {
   object-fit: contain;
   margin-bottom: 16px;
 }
+
+.status-page {
+  max-width: 700px;
+  margin: 60px auto;
+  padding: 24px;
+}
+
+.status-page h1 {
+  margin-bottom: 16px;
+}
+
+.status-page p {
+  margin-bottom: 24px;
+}
+
+.status-link {
+  display: inline-block;
+  padding: 10px 16px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.status-link:hover {
+  text-decoration: underline;
+}
+
+.status-link:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+.retry-button {
+  padding: 10px 16px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  text-decoration: underline;
+}
+
+.retry-button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}

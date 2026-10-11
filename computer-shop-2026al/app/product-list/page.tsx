@@ -10,7 +10,22 @@ const categoryNames: Record<ProductType, string> = {
 };
 
 export default async function ProductListPage() {
+ //  const forceError = true;
+
+ // if (forceError) {
+ //   throw new Error("TESTOWA AWARIA REPOZYTORIUM");
+//  }
+
   const products = await getProducts("name");
+
+  if (products.length === 0) {
+  return (
+    <main>
+      <h1>Katalog produktów</h1>
+      <p>Brak produktów do wyświetlenia.</p>
+    </main>
+  );
+    }
 
   return (
     <main>
