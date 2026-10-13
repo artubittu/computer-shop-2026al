@@ -284,3 +284,158 @@ Pusty wynik jest poprawnym stanem danych i powoduje wyświetlenie informacji o b
 404 oznacza, że żądana trasa nie istnieje i jest obsługiwane przez `not-found.tsx`.
 
 Nieoczekiwana awaria podczas renderowania jest obsługiwana przez `error.tsx`, który prezentuje bezpieczny komunikat i możliwość ponowienia operacji.
+
+## Lab 07 – Dynamiczne trasy i filtrowanie katalogu
+
+W ramach laboratorium aplikacja została rozszerzona o dynamiczne strony
+szczegółów produktów oraz filtrowanie i sortowanie katalogu za pomocą
+parametrów URL.
+
+### Trasy
+
+- `/` – strona główna
+- `/product-list` – katalog produktów
+- `/product-list/[id]` – szczegóły wybranego produktu
+- `/basket` – koszyk
+- `/order-history` – historia zamówień
+- `/about` – informacje o projekcie
+- `/api/products` – API produktów
+
+### Szczegóły produktu
+
+Szczegóły produktu dostępne są pod adresem:
+
+`/product-list/<id>`
+
+Przykład:
+
+`/product-list/4`
+
+Identyfikator produktu musi:
+- składać się wyłącznie z cyfr,
+- być liczbą całkowitą z zakresu 1–2147483647,
+- nie zawierać znaku,
+- nie zawierać zer wiodących.
+
+Niepoprawny identyfikator lub poprawny identyfikator nieistniejącego
+produktu powoduje wyświetlenie strony Not Found.
+
+Awaria repozytorium nie jest traktowana jako brak produktu.
+
+### Parametry katalogu
+
+Stan filtrów katalogu jest przechowywany w URL.
+
+Obsługiwane parametry:
+
+#### `type`
+
+Kategoria produktu:
+
+- `all` – wszystkie produkty (domyślnie)
+- `cpu` – procesory
+- `gpu` – karty graficzne
+- `ram` – pamięć RAM
+- `disk` – dyski
+
+#### `stock`
+
+Dostępność:
+
+- `all` – wszystkie produkty (domyślnie)
+- `available` – produkty z `amount > 0`
+- `unavailable` – produkty z `amount === 0`
+
+#### `sort`
+
+Sortowanie:
+
+- `name` – nazwa rosnąco (domyślnie)
+- `newest` – data malejąco, od najnowszych
+
+W przypadku remisu sortowania produkty są dodatkowo sortowane
+rosnąco według `id`.
+
+### Przykładowe adresy
+
+Wszystkie produkty:
+
+`/product-list`
+
+Dostępne karty graficzne:
+
+`/product-list?type=gpu&stock=available`
+
+Dostępne karty graficzne od najnowszych:
+
+`/product-list?type=gpu&stock=available&sort=newest`
+
+Niedostępne procesory:
+
+`/product-list?type=cpu&stock=unavailable&sort=name`
+
+Niepoprawna wartość parametru jest zastępowana wartością domyślną,
+a użytkownik otrzymuje ostrzeżenie.
+
+Przykład:
+
+`/product-list?type=telefon&stock=available&sort=newest`
+
+Powtórzony rozpoznawany parametr również otrzymuje wartość domyślną.
+
+Przykład:
+
+`/product-list?type=gpu&type=cpu&sort=newest`
+
+W tym przypadku `type` przyjmuje `all`, natomiast poprawny
+`sort=newest` pozostaje zachowany.
+
+### Architektura
+
+Katalog produktów pozostaje Server Componentem.
+
+`searchParams` są odczytywane po stronie serwera i przekazywane do
+`parseCatalogParams()`. Dopiero zwalidowane i typowane kryteria są
+przekazywane do repozytorium.
+
+Przepływ danych:
+
+URL
+→ searchParams
+→ parseCatalogParams()
+→ CatalogCriteria
+→ getCatalogProducts()
+→ widok
+
+Dane produktów są odczytywane wyłącznie po stronie serwera.
+Komponent katalogu nie wykonuje zapytania HTTP do własnego API,
+ponieważ może bezpośrednio korzystać z repozytorium.
+
+Komponent `Navigation` jest Client Componentem, ponieważ korzysta
+z `usePathname()` do określenia aktywnej pozycji nawigacji.
+Pozostała część layoutu nie została z tego powodu zamieniona na
+Client Component.
+
+URL jest źródłem stanu filtrów. Dzięki temu:
+- odświeżenie strony zachowuje filtry,
+- skopiowany adres odtwarza ten sam widok,
+- przyciski Wstecz/Dalej odtwarzają poprzedni stan katalogu.
+
+### Obsługa błędów
+
+Rozróżniane są trzy przypadki:
+
+1. Niepoprawny format identyfikatora → Not Found.
+2. Poprawny identyfikator, ale brak produktu → Not Found.
+3. Awaria repozytorium → błąd aplikacji, a nie Not Found.
+
+Produkt z `amount === 0` nadal istnieje i może zostać wyświetlony.
+Jest jedynie oznaczony jako niedostępny.
+
+### Metadata
+
+Strona szczegółów produktu wykorzystuje `generateMetadata()`.
+
+Tytuł strony jest generowany na podstawie danych produktu, np.:
+
+`Dysk SSD 004 | Computer Shop`
