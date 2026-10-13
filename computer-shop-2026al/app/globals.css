@@ -513,3 +513,21 @@ footer {
   outline: 3px solid #60a5fa;
   outline-offset: 3px;
 }
+
+.empty-catalog {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+}
+
+.empty-catalog p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+nav a.nav-active {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
