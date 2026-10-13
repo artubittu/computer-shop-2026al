@@ -1,4 +1,8 @@
-import { getProducts } from "../../lib/products/repository";
+import { getCatalogProducts } from "../../lib/products/repository";
+import {
+  parseCatalogParams,
+  type RawSearchParams,
+} from "../../lib/products/catalog-params";
 import type { ProductType } from "../../lib/products/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,27 +14,114 @@ const categoryNames: Record<ProductType, string> = {
   disk: "Dysk",
 };
 
-export default async function ProductListPage() {
- //  const forceError = true;
+type ProductListPageProps = {
+  searchParams: Promise<RawSearchParams>;
+};
 
- // if (forceError) {
- //   throw new Error("TESTOWA AWARIA REPOZYTORIUM");
-//  }
+export default async function ProductListPage({
+  searchParams,
+}: ProductListPageProps) {
+  //  const forceError = true;
 
-  const products = await getProducts("name");
+  // if (forceError) {
+  //   throw new Error("TESTOWA AWARIA REPOZYTORIUM");
+  //  }
+
+  const rawSearchParams = await searchParams;
+
+  const { criteria, warnings } =
+    parseCatalogParams(rawSearchParams);
+
+  const products = await getCatalogProducts(criteria);
 
   if (products.length === 0) {
-  return (
-    <main>
-      <h1>Katalog produktów</h1>
-      <p>Brak produktów do wyświetlenia.</p>
-    </main>
-  );
-    }
+    return (
+      <main>
+        <h1>Katalog produktów</h1>
+
+        {warnings.length > 0 && (
+          <div className="catalog-warning">
+            {warnings.map((warning) => (
+              <p key={warning}>{warning}</p>
+            ))}
+          </div>
+        )}
+
+        <p>Brak produktów do wyświetlenia.</p>
+
+        <Link href="/product-list">
+          Wyczyść filtry
+        </Link>
+      </main>
+    );
+  }
 
   return (
     <main>
       <h1>Katalog produktów</h1>
+
+      <form method="GET" className="catalog-filters">
+  <div className="filter-field">
+    <label htmlFor="type">Kategoria</label>
+
+    <select
+      id="type"
+      name="type"
+      defaultValue={criteria.type}
+    >
+      <option value="all">Wszystkie</option>
+      <option value="cpu">Procesory</option>
+      <option value="gpu">Karty graficzne</option>
+      <option value="ram">Pamięć RAM</option>
+      <option value="disk">Dyski</option>
+    </select>
+  </div>
+
+  <div className="filter-field">
+    <label htmlFor="stock">Dostępność</label>
+
+    <select
+      id="stock"
+      name="stock"
+      defaultValue={criteria.stock}
+    >
+      <option value="all">Wszystkie</option>
+      <option value="available">Dostępne</option>
+      <option value="unavailable">Niedostępne</option>
+    </select>
+  </div>
+
+  <div className="filter-field">
+    <label htmlFor="sort">Sortowanie</label>
+
+    <select
+      id="sort"
+      name="sort"
+      defaultValue={criteria.sort}
+    >
+      <option value="name">Nazwa</option>
+      <option value="newest">Najnowsze</option>
+    </select>
+  </div>
+
+  <div className="filter-actions">
+    <button type="submit">
+      Zastosuj
+    </button>
+
+    <Link href="/product-list" className="clear-filters">
+      Wyczyść filtry
+    </Link>
+  </div>
+</form>
+
+      {warnings.length > 0 && (
+        <div className="catalog-warning">
+          {warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      )}
 
       <p>Liczba produktów: {products.length}</p>
 
@@ -38,20 +129,21 @@ export default async function ProductListPage() {
         {products.map((product) => (
           <article className="product-card" key={product.id}>
             <Image
-                src={product.image}
-                alt={`Zdjęcie produktu ${product.name}`}
-                width={240}
-                height={160}
-                className="product-image"
+              src={product.image}
+              alt={`Zdjęcie produktu ${product.name}`}
+              width={240}
+              height={160}
+              className="product-image"
             />
+
             <h2>
-            <Link
-              href={`/product-list/${product.id}`}
-              className="product-name-link"
-            >
-              {product.name}
-            </Link>
-          </h2>
+              <Link
+                href={`/product-list/${product.id}`}
+                className="product-name-link"
+              >
+                {product.name}
+              </Link>
+            </h2>
 
             <p>
               <strong>Kategoria:</strong> {categoryNames[product.type]}

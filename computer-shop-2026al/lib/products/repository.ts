@@ -1,7 +1,7 @@
 import "server-only";
 
 import rawProducts from "../../data/products.json";
-
+import type { CatalogCriteria } from "./catalog-params";
 import type {
   Product,
   ProductType,
@@ -86,4 +86,58 @@ export async function getProductById(
       (product) => product.id === id
     ) ?? null
   );
+}
+
+export async function getCatalogProducts(
+  criteria: CatalogCriteria
+): Promise<Product[]> {
+  let result = [...products];
+
+  // Filtrowanie po kategorii
+  if (criteria.type !== "all") {
+    result = result.filter(
+      (product) => product.type === criteria.type
+    );
+  }
+
+  // Filtrowanie po dostępności
+  if (criteria.stock === "available") {
+    result = result.filter(
+      (product) => product.amount > 0
+    );
+  }
+
+  if (criteria.stock === "unavailable") {
+    result = result.filter(
+      (product) => product.amount === 0
+    );
+  }
+
+  // Sortowanie
+  if (criteria.sort === "name") {
+    result.sort((a, b) => {
+      const nameComparison = a.name.localeCompare(b.name, "pl");
+
+      if (nameComparison !== 0) {
+        return nameComparison;
+      }
+
+      return a.id - b.id;
+    });
+  }
+
+  if (criteria.sort === "newest") {
+    result.sort((a, b) => {
+      const dateComparison =
+        new Date(b.date).getTime() - new Date(a.date).getTime();
+
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+
+      return a.id - b.id;
+    });
+  }
+
+  return result;
 }
