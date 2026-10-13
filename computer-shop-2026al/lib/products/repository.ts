@@ -23,7 +23,10 @@ function delay(ms: number): Promise<void> {
 export async function getProducts(
   sort: ProductSort = "name"
 ): Promise<Product[]> {
+  if (process.env.PRODUCTS_DELAY === "true") {
     await delay(2000);
+  }
+
   const result = [...products];
 
   if (sort === "name") {

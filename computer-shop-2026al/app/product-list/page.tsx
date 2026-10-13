@@ -1,6 +1,7 @@
 import { getProducts } from "../../lib/products/repository";
 import type { ProductType } from "../../lib/products/types";
 import Image from "next/image";
+import Link from "next/link";
 
 const categoryNames: Record<ProductType, string> = {
   cpu: "Procesor",
@@ -43,7 +44,14 @@ export default async function ProductListPage() {
                 height={160}
                 className="product-image"
             />
-            <h2>{product.name}</h2>
+            <h2>
+            <Link
+              href={`/product-list/${product.id}`}
+              className="product-name-link"
+            >
+              {product.name}
+            </Link>
+          </h2>
 
             <p>
               <strong>Kategoria:</strong> {categoryNames[product.type]}
