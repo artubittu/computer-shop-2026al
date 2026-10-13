@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
-import LayoutCounter from "../components/LayoutCounter";
+//import LayoutCounter from "../components/LayoutCounter";
 
 export const metadata: Metadata = {
   title: {
@@ -24,7 +24,7 @@ export default function RootLayout({
           <div className="container">
             <p className="site-title">Computer Shop</p>
             <Navigation />
-            <LayoutCounter />
+            {/* <LayoutCounter /> */}
           </div>
         </header>
 
