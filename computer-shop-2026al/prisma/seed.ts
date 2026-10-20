@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../lib/generated/prisma/client";
+import { createNameSortKey } from "../lib/products/name-sort-key";
 
 import products from "../data/products.json";
 
@@ -71,12 +72,16 @@ async function main() {
       );
     }
 
+    const nameSortKey = createNameSortKey(product.name);
+
     await prisma.product.upsert({
       where: {
         code: product.code,
       },
+
       update: {
         name: product.name,
+        nameSortKey,
         price: product.price,
         amount: product.amount,
         description: product.description,
@@ -84,10 +89,12 @@ async function main() {
         image: product.image,
         categoryId,
       },
+
       create: {
         id: product.id,
         code: product.code,
         name: product.name,
+        nameSortKey,
         price: product.price,
         amount: product.amount,
         description: product.description,

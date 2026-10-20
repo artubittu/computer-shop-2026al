@@ -1,67 +1,97 @@
 import "server-only";
 
-import rawProducts from "../../data/products.json";
+import { prisma } from "@/lib/prisma";
 import type { CatalogCriteria } from "./catalog-params";
-import type {
-  Product,
-  ProductType,
-} from "./types";
-
-import {
-  validateProducts,
-} from "./validation";
-
-// Walidacja danych w momencie wczytania repozytorium.
-const products: Product[] = validateProducts(rawProducts);
+import type { Product, ProductType } from "./types";
 
 export type ProductSort = "name" | "date";
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+type DatabaseProduct = {
+  id: number;
+  code: string;
+  name: string;
+  price: number;
+  amount: number;
+  description: string;
+  date: Date;
+  image: string;
+  category: {
+    slug: string;
+  };
+};
+
+/**
+ * Zamienia rekord z PostgreSQL/Prisma
+ * na format Product używany przez aplikację.
+ */
+function toProduct(product: DatabaseProduct): Product {
+  return {
+    id: product.id,
+    code: product.code,
+    name: product.name,
+    type: product.category.slug as ProductType,
+    price: product.price,
+    amount: product.amount,
+    description: product.description,
+    date: product.date.toISOString(),
+    image: product.image,
+  };
 }
 
 export async function getProducts(
   sort: ProductSort = "name"
 ): Promise<Product[]> {
-  if (process.env.PRODUCTS_DELAY === "true") {
-    await delay(2000);
-  }
+  const products = await prisma.product.findMany({
+    include: {
+      category: true,
+    },
+    orderBy:
+      sort === "name"
+        ? [
+            { nameSortKey: "asc" },
+            { id: "asc" },
+          ]
+        : [
+            { date: "desc" },
+            { id: "asc" },
+          ],
+  });
 
-  const result = [...products];
-
-  if (sort === "name") {
-    result.sort((a, b) =>
-      a.name.localeCompare(b.name, "pl")
-    );
-  }
-
-  if (sort === "date") {
-    result.sort(
-      (a, b) =>
-        new Date(b.date).getTime() -
-        new Date(a.date).getTime()
-    );
-  }
-
-  return result;
+  return products.map(toProduct);
 }
 
 /**
  * Zwraca produkty dostępne w magazynie.
  */
 export async function getAvailableProducts(): Promise<Product[]> {
-  return products.filter(
-    (product) => product.amount > 0
-  );
+  const products = await prisma.product.findMany({
+    where: {
+      amount: {
+        gt: 0,
+      },
+    },
+    include: {
+      category: true,
+    },
+  });
+
+  return products.map(toProduct);
 }
 
 /**
  * Zwraca produkty niedostępne w magazynie.
  */
 export async function getUnavailableProducts(): Promise<Product[]> {
-  return products.filter(
-    (product) => product.amount === 0
-  );
+  const products = await prisma.product.findMany({
+    where: {
+      amount: 0,
+    },
+    include: {
+      category: true,
+    },
+  });
+
+  return products.map(toProduct);
 }
 
 /**
@@ -70,74 +100,84 @@ export async function getUnavailableProducts(): Promise<Product[]> {
 export async function getProductsByType(
   type: ProductType
 ): Promise<Product[]> {
-  return products.filter(
-    (product) => product.type === type
-  );
+  const products = await prisma.product.findMany({
+    where: {
+      category: {
+        slug: type,
+      },
+    },
+    include: {
+      category: true,
+    },
+  });
+
+  return products.map(toProduct);
 }
 
 /**
- Wyszukuje pojedynczy produkt po identyfikatorze.
+ * Wyszukuje pojedynczy produkt po identyfikatorze.
  */
 export async function getProductById(
   id: number
 ): Promise<Product | null> {
-  return (
-    products.find(
-      (product) => product.id === id
-    ) ?? null
-  );
+  const product = await prisma.product.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      category: true,
+    },
+  });
+
+  return product ? toProduct(product) : null;
 }
 
+/**
+ * Zwraca katalog zgodnie z kryteriami filtrowania i sortowania.
+ */
 export async function getCatalogProducts(
   criteria: CatalogCriteria
 ): Promise<Product[]> {
-  let result = [...products];
+  const products = await prisma.product.findMany({
+    where: {
+      ...(criteria.type !== "all"
+        ? {
+            category: {
+              slug: criteria.type,
+            },
+          }
+        : {}),
 
-  // Filtrowanie po kategorii
-  if (criteria.type !== "all") {
-    result = result.filter(
-      (product) => product.type === criteria.type
-    );
-  }
+      ...(criteria.stock === "available"
+        ? {
+            amount: {
+              gt: 0,
+            },
+          }
+        : {}),
 
-  // Filtrowanie po dostępności
-  if (criteria.stock === "available") {
-    result = result.filter(
-      (product) => product.amount > 0
-    );
-  }
+      ...(criteria.stock === "unavailable"
+        ? {
+            amount: 0,
+          }
+        : {}),
+    },
 
-  if (criteria.stock === "unavailable") {
-    result = result.filter(
-      (product) => product.amount === 0
-    );
-  }
+    include: {
+      category: true,
+    },
 
-  // Sortowanie
-  if (criteria.sort === "name") {
-    result.sort((a, b) => {
-      const nameComparison = a.name.localeCompare(b.name, "pl");
+    orderBy:
+      criteria.sort === "name"
+        ? [
+            { nameSortKey: "asc" },
+            { id: "asc" },
+          ]
+        : [
+            { date: "desc" },
+            { id: "asc" },
+          ],
+  });
 
-      if (nameComparison !== 0) {
-        return nameComparison;
-      }
-
-      return a.id - b.id;
-    });
-  }
-
-  if (criteria.sort === "newest") {
-    result.sort((a, b) => {
-      const dateComparison =
-        new Date(b.date).getTime() - new Date(a.date).getTime();
-
-      if (dateComparison !== 0) {
-        return dateComparison;
-      }
-
-      return a.id - b.id;
-    });
-  }
-
-  return result;
+  return products.map(toProduct);
 }

@@ -18,12 +18,13 @@ model Product {
   id          Int      @id @default(autoincrement())
   code        String   @unique @db.VarChar(10)
   name        String
+  nameSortKey String   @db.Text
   price       Int
   amount      Int
   description String
-  date        DateTime
+  date        DateTime @db.Timestamptz(3)
   image       String
 
   categoryId Int
-  category   Category @relation(fields: [categoryId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 }
