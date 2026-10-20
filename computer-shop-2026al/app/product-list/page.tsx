@@ -6,6 +6,7 @@ import {
 import type { ProductType } from "../../lib/products/types";
 import Image from "next/image";
 import Link from "next/link";
+import { connection } from "next/server";
 
 const categoryNames: Record<ProductType, string> = {
   cpu: "Procesor",
@@ -21,6 +22,7 @@ type ProductListPageProps = {
 export default async function ProductListPage({
   searchParams,
 }: ProductListPageProps) {
+    await connection();
   //  const forceError = true;
 
   // if (forceError) {
