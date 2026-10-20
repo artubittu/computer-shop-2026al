@@ -42,68 +42,70 @@ const categories = [
 async function main() {
   console.log("Rozpoczynam seedowanie bazy danych...");
 
-  for (const category of categories) {
-    await prisma.category.upsert({
-      where: {
-        slug: category.slug,
-      },
-      update: {
-        name: category.name,
-      },
-      create: category,
-    });
-  }
-
-  const databaseCategories = await prisma.category.findMany();
-
-  const categoryBySlug = new Map(
-    databaseCategories.map((category) => [
-      category.slug,
-      category.id,
-    ])
-  );
-
-  for (const product of products) {
-    const categoryId = categoryBySlug.get(product.type);
-
-    if (!categoryId) {
-      throw new Error(
-        `Nieznana kategoria produktu ${product.code}: ${product.type}`
-      );
+  await prisma.$transaction(async (tx) => {
+    for (const category of categories) {
+      await tx.category.upsert({
+        where: {
+          slug: category.slug,
+        },
+        update: {
+          name: category.name,
+        },
+        create: category,
+      });
     }
 
-    const nameSortKey = createNameSortKey(product.name);
+    const databaseCategories = await tx.category.findMany();
 
-    await prisma.product.upsert({
-      where: {
-        code: product.code,
-      },
+    const categoryBySlug = new Map(
+      databaseCategories.map((category) => [
+        category.slug,
+        category.id,
+      ])
+    );
 
-      update: {
-        name: product.name,
-        nameSortKey,
-        price: product.price,
-        amount: product.amount,
-        description: product.description,
-        date: new Date(product.date),
-        image: product.image,
-        categoryId,
-      },
+    for (const product of products) {
+      const categoryId = categoryBySlug.get(product.type);
 
-      create: {
-        id: product.id,
-        code: product.code,
-        name: product.name,
-        nameSortKey,
-        price: product.price,
-        amount: product.amount,
-        description: product.description,
-        date: new Date(product.date),
-        image: product.image,
-        categoryId,
-      },
-    });
-  }
+      if (!categoryId) {
+        throw new Error(
+          `Nieznana kategoria produktu ${product.code}: ${product.type}`
+        );
+      }
+
+      const nameSortKey = createNameSortKey(product.name);
+
+      await tx.product.upsert({
+        where: {
+          code: product.code,
+        },
+
+        update: {
+          name: product.name,
+          nameSortKey,
+          price: product.price,
+          amount: product.amount,
+          description: product.description,
+          date: new Date(product.date),
+          image: product.image,
+          categoryId,
+        },
+
+        create: {
+          id: product.id,
+          code: product.code,
+          name: product.name,
+          nameSortKey,
+          price: product.price,
+          amount: product.amount,
+          description: product.description,
+          date: new Date(product.date),
+          image: product.image,
+          categoryId,
+        },
+      });
+    }
+  });
 
   console.log(`Kategorie: ${categories.length}`);
   console.log(`Produkty: ${products.length}`);
