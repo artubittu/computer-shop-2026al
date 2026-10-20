@@ -120,6 +120,14 @@ export async function getProductsByType(
 export async function getProductById(
   id: number
 ): Promise<Product | null> {
+  if (
+    !Number.isInteger(id) ||
+    id < 1 ||
+    id > 2_147_483_647
+  ) {
+    return null;
+  }
+
   const product = await prisma.product.findUnique({
     where: {
       id,

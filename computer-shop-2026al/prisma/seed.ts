@@ -3,6 +3,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../lib/generated/prisma/client";
 import { createNameSortKey } from "../lib/products/name-sort-key";
+import { validateProducts } from "../lib/products/validation";
 
 import products from "../data/products.json";
 
@@ -41,6 +42,10 @@ const categories = [
 
 async function main() {
   console.log("Rozpoczynam seedowanie bazy danych...");
+
+  validateProducts(products);
+
+  console.log("Walidacja danych zakończona pomyślnie.");
 
   await prisma.$transaction(async (tx) => {
     for (const category of categories) {

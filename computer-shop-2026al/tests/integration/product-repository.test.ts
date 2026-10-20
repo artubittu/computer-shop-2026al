@@ -110,6 +110,30 @@ describe("Product repository - integration", () => {
     expect(product).toBeNull();
   });
 
+  it("odrzuca ID równe 0", async () => {
+  const product = await getProductById(0);
+
+  expect(product).toBeNull();
+});
+
+it("odrzuca ujemne ID", async () => {
+  const product = await getProductById(-1);
+
+  expect(product).toBeNull();
+});
+
+it("odrzuca ID większe niż maksymalny INTEGER PostgreSQL", async () => {
+  const product = await getProductById(2_147_483_648);
+
+  expect(product).toBeNull();
+});
+
+it("odrzuca ID niebędące liczbą całkowitą", async () => {
+  const product = await getProductById(1.5);
+
+  expect(product).toBeNull();
+});
+
   it("filtruje produkty według kategorii", async () => {
     const products = await getCatalogProducts({
       type: "cpu",
@@ -159,5 +183,64 @@ describe("Product repository - integration", () => {
     });
 
     expect(products.map((product) => product.id)).toEqual([2, 3, 1]);
+  });
+});
+
+describe("PostgreSQL constraints - integration", () => {
+  it("baza odrzuca produkt z ujemną ceną", async () => {
+    await expect(
+      prisma.product.create({
+        data: {
+          id: 101,
+          code: "NEGPRICE01",
+          name: "Ujemna cena",
+          nameSortKey: createNameSortKey("Ujemna cena"),
+          price: -1,
+          amount: 1,
+          description: "Test ograniczenia ceny",
+          date: new Date("2026-04-01T10:00:00.000Z"),
+          image: "/test/negative-price.jpg",
+          categoryId: 1,
+        },
+      })
+    ).rejects.toThrow();
+  });
+
+  it("baza odrzuca duplikat kodu produktu", async () => {
+    await expect(
+      prisma.product.create({
+        data: {
+          id: 102,
+          code: "TESTCPU001",
+          name: "Duplikat kodu",
+          nameSortKey: createNameSortKey("Duplikat kodu"),
+          price: 10000,
+          amount: 1,
+          description: "Test unikalności kodu",
+          date: new Date("2026-04-02T10:00:00.000Z"),
+          image: "/test/duplicate-code.jpg",
+          categoryId: 1,
+        },
+      })
+    ).rejects.toThrow();
+  });
+
+  it("baza odrzuca produkt z nieistniejącą kategorią", async () => {
+    await expect(
+      prisma.product.create({
+        data: {
+          id: 103,
+          code: "BADCAT0001",
+          name: "Błędna kategoria",
+          nameSortKey: createNameSortKey("Błędna kategoria"),
+          price: 10000,
+          amount: 1,
+          description: "Test klucza obcego",
+          date: new Date("2026-04-03T10:00:00.000Z"),
+          image: "/test/bad-category.jpg",
+          categoryId: 999999,
+        },
+      })
+    ).rejects.toThrow();
   });
 });
