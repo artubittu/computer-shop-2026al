@@ -7,6 +7,7 @@ import type { ProductType } from "../../lib/products/types";
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
+import AddToCartButton from "@/components/AddToCartButton";
 
 const categoryNames: Record<ProductType, string> = {
   cpu: "Procesor",
@@ -290,6 +291,10 @@ return (
                 >
                   Zobacz produkt
                 </Link>
+                <AddToCartButton
+                productId={product.id}
+                disabled={product.amount <= 0}
+              />
               </div>
             </div>
           </article>
