@@ -8,3 +8,13 @@ export async function getCurrentSession() {
     headers: await headers(),
   });
 }
+
+export async function requireCurrentUser() {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  return session.user;
+}
