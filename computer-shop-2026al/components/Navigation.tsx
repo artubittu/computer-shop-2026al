@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import GitHubSignInButton from "@/components/GitHubSignInButton";
 
 export default function Navigation() {
@@ -21,47 +22,55 @@ export default function Navigation() {
   const isAboutActive = pathname === "/about";
 
   return (
-    <nav aria-label="Główna nawigacja">
-      <Link
-        href="/"
-        className={isHomeActive ? "nav-active" : undefined}
-        aria-current={isHomeActive ? "page" : undefined}
-      >
-        Strona główna
-      </Link>
+    <nav
+      aria-label="Główna nawigacja"
+      className="flex w-full items-center"
+    >
+      <div className="flex items-center gap-8">
+        <Link
+          href="/"
+          className={isHomeActive ? "nav-active" : undefined}
+          aria-current={isHomeActive ? "page" : undefined}
+        >
+          Strona główna
+        </Link>
 
-      <Link
-        href="/product-list"
-        className={isProductsActive ? "nav-active" : undefined}
-        aria-current={isProductsActive ? "page" : undefined}
-      >
-        Produkty
-      </Link>
+        <Link
+          href="/product-list"
+          className={isProductsActive ? "nav-active" : undefined}
+          aria-current={isProductsActive ? "page" : undefined}
+        >
+          Produkty
+        </Link>
 
-      <Link
-        href="/basket"
-        className={isBasketActive ? "nav-active" : undefined}
-        aria-current={isBasketActive ? "page" : undefined}
-      >
-        Koszyk
-      </Link>
+        <Link
+          href="/basket"
+          className={isBasketActive ? "nav-active" : undefined}
+          aria-current={isBasketActive ? "page" : undefined}
+        >
+          Koszyk
+        </Link>
 
-      <Link
-        href="/order-history"
-        className={isOrderHistoryActive ? "nav-active" : undefined}
-        aria-current={isOrderHistoryActive ? "page" : undefined}
-      >
-        Historia zamówień
-      </Link>
+        <Link
+          href="/order-history"
+          className={isOrderHistoryActive ? "nav-active" : undefined}
+          aria-current={isOrderHistoryActive ? "page" : undefined}
+        >
+          Historia zamówień
+        </Link>
 
-      <Link
-        href="/about"
-        className={isAboutActive ? "nav-active" : undefined}
-        aria-current={isAboutActive ? "page" : undefined}
-      >
-        O projekcie
-      </Link>
-      <GitHubSignInButton />
+        <Link
+          href="/about"
+          className={isAboutActive ? "nav-active" : undefined}
+          aria-current={isAboutActive ? "page" : undefined}
+        >
+          O projekcie
+        </Link>
+      </div>
+
+      <div className="ml-auto pl-10">
+        <GitHubSignInButton />
+      </div>
     </nav>
   );
 }
