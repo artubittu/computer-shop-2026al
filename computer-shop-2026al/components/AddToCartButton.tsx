@@ -22,12 +22,14 @@ export default function AddToCartButton({
     setError(null);
 
     startTransition(async () => {
-      try {
-        await addProductAction(productId);
-        setMessage("Dodano do koszyka.");
-      } catch {
-        setError("Nie udało się dodać produktu do koszyka.");
+      const result = await addProductAction(productId);
+
+      if (!result.success) {
+        setError(result.error);
+        return;
       }
+
+      setMessage("Dodano do koszyka.");
     });
   }
 

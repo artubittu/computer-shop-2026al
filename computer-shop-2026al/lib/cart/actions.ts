@@ -14,45 +14,140 @@ import {
   isValidQuantity,
 } from "@/lib/cart/validation";
 
-export async function addProductAction(productId: number) {
-  const user = await requireCurrentUser();
+export type CartActionResult =
+  | {
+      success: true;
+    }
+  | {
+      success: false;
+      error: string;
+      field?: "productId" | "itemId" | "quantity";
+    };
 
-  if (!isValidProductId(productId)) {
-    throw new Error("Invalid product ID");
+async function getAuthenticatedUser() {
+  try {
+    return await requireCurrentUser();
+  } catch {
+    return null;
+  }
+}
+
+export async function addProductAction(
+  productId: number,
+): Promise<CartActionResult> {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    return {
+      success: false,
+      error: "Musisz być zalogowany, aby dodać produkt do koszyka.",
+    };
   }
 
-  await addProduct(user.id, productId);
+  if (!isValidProductId(productId)) {
+    return {
+      success: false,
+      error: "Nieprawidłowy identyfikator produktu.",
+      field: "productId",
+    };
+  }
 
-  revalidatePath("/basket");
+  try {
+    await addProduct(user.id, productId);
+
+    revalidatePath("/basket");
+
+    return {
+      success: true,
+    };
+  } catch {
+    return {
+      success: false,
+      error:
+        "Nie udało się dodać produktu. Sprawdź jego dostępność i spróbuj ponownie.",
+    };
+  }
 }
 
 export async function updateItemQuantityAction(
   itemId: number,
   quantity: number,
-) {
-  const user = await requireCurrentUser();
+): Promise<CartActionResult> {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    return {
+      success: false,
+      error: "Musisz być zalogowany, aby zmienić koszyk.",
+    };
+  }
 
   if (!isValidCartItemId(itemId)) {
-    throw new Error("Invalid cart item ID");
+    return {
+      success: false,
+      error: "Nieprawidłowa pozycja koszyka.",
+      field: "itemId",
+    };
   }
 
   if (!isValidQuantity(quantity)) {
-    throw new Error("Invalid quantity");
+    return {
+      success: false,
+      error: "Ilość musi być liczbą całkowitą od 1 do 99.",
+      field: "quantity",
+    };
   }
 
-  await updateItemQuantity(user.id, itemId, quantity);
+  try {
+    await updateItemQuantity(user.id, itemId, quantity);
 
-  revalidatePath("/basket");
+    revalidatePath("/basket");
+
+    return {
+      success: true,
+    };
+  } catch {
+    return {
+      success: false,
+      error:
+        "Nie udało się zmienić ilości. Sprawdź dostępny stan produktu.",
+      field: "quantity",
+    };
+  }
 }
 
-export async function removeItemAction(itemId: number) {
-  const user = await requireCurrentUser();
+export async function removeItemAction(
+  itemId: number,
+): Promise<CartActionResult> {
+  const user = await getAuthenticatedUser();
 
-  if (!isValidCartItemId(itemId)) {
-    throw new Error("Invalid cart item ID");
+  if (!user) {
+    return {
+      success: false,
+      error: "Musisz być zalogowany, aby zmienić koszyk.",
+    };
   }
 
-  await removeItem(user.id, itemId);
+  if (!isValidCartItemId(itemId)) {
+    return {
+      success: false,
+      error: "Nieprawidłowa pozycja koszyka.",
+      field: "itemId",
+    };
+  }
 
-  revalidatePath("/basket");
+  try {
+    await removeItem(user.id, itemId);
+
+    revalidatePath("/basket");
+
+    return {
+      success: true,
+    };
+  } catch {
+    return {
+      success: false,
+      error: "Nie udało się usunąć produktu z koszyka.",
+    };
+  }
 }

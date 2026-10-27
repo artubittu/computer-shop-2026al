@@ -382,4 +382,105 @@ describe("Cart concurrency - integration", () => {
     expect(cart.items).toHaveLength(1);
     expect(cart.items[0].quantity).toBe(1);
   });
+
+    it("dwie równoległe zmiany ilości nie uszkadzają stanu koszyka", async () => {
+    await addProduct(USER_A_ID, 1);
+
+    const cartBefore = await getCart(USER_A_ID);
+    const itemId = cartBefore.items[0].id;
+
+    const results = await Promise.allSettled([
+      updateItemQuantity(USER_A_ID, itemId, 2),
+      updateItemQuantity(USER_A_ID, itemId, 4),
+    ]);
+
+    const fulfilled = results.filter(
+      (result) => result.status === "fulfilled"
+    );
+
+    const rejected = results.filter(
+      (result) => result.status === "rejected"
+    );
+
+    expect(fulfilled.length).toBeGreaterThanOrEqual(1);
+    expect(fulfilled.length + rejected.length).toBe(2);
+
+    const cartAfter = await getCart(USER_A_ID);
+
+    expect(cartAfter.items).toHaveLength(1);
+    expect([2, 4]).toContain(cartAfter.items[0].quantity);
+
+    const rows = await prisma.cartItem.count({
+      where: {
+        cart: {
+          userId: USER_A_ID,
+        },
+        productId: 1,
+      },
+    });
+
+    expect(rows).toBe(1);
+  });
+
+  it("równoległa zmiana ilości i usunięcie pozostawiają spójny stan koszyka", async () => {
+    await addProduct(USER_A_ID, 1);
+
+    const cartBefore = await getCart(USER_A_ID);
+    const itemId = cartBefore.items[0].id;
+
+    const results = await Promise.allSettled([
+      updateItemQuantity(USER_A_ID, itemId, 3),
+      removeItem(USER_A_ID, itemId),
+    ]);
+
+    expect(results).toHaveLength(2);
+
+    const cartAfter = await getCart(USER_A_ID);
+
+    expect(cartAfter.items.length).toBeLessThanOrEqual(1);
+
+    if (cartAfter.items.length === 1) {
+      expect(cartAfter.items[0].quantity).toBe(3);
+    }
+
+    const rows = await prisma.cartItem.count({
+      where: {
+        cart: {
+          userId: USER_A_ID,
+        },
+        productId: 1,
+      },
+    });
+
+    expect(rows).toBeLessThanOrEqual(1);
+  });
+
+  it("dwie sesje tego samego użytkownika nie tworzą duplikatu produktu", async () => {
+    const sessionOneOperation = addProduct(USER_A_ID, 1);
+    const sessionTwoOperation = addProduct(USER_A_ID, 1);
+
+    const results = await Promise.allSettled([
+      sessionOneOperation,
+      sessionTwoOperation,
+    ]);
+
+    expect(results.every((result) => result.status === "fulfilled")).toBe(true);
+
+    const cart = await getCart(USER_A_ID);
+
+    expect(cart.items).toHaveLength(1);
+    expect(cart.items[0].quantity).toBe(2);
+
+    const databaseItems = await prisma.cartItem.findMany({
+      where: {
+        cart: {
+          userId: USER_A_ID,
+        },
+        productId: 1,
+      },
+    });
+
+    expect(databaseItems).toHaveLength(1);
+    expect(databaseItems[0].quantity).toBe(2);
+  });
 });

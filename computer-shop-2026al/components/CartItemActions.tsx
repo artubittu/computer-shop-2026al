@@ -26,10 +26,13 @@ export default function CartItemActions({
     setError(null);
 
     startTransition(async () => {
-      try {
-        await updateItemQuantityAction(itemId, newQuantity);
-      } catch {
-        setError("Nie udało się zmienić ilości produktu.");
+      const result = await updateItemQuantityAction(
+        itemId,
+        newQuantity,
+      );
+
+      if (!result.success) {
+        setError(result.error);
       }
     });
   }
@@ -38,10 +41,10 @@ export default function CartItemActions({
     setError(null);
 
     startTransition(async () => {
-      try {
-        await removeItemAction(itemId);
-      } catch {
-        setError("Nie udało się usunąć produktu z koszyka.");
+      const result = await removeItemAction(itemId);
+
+      if (!result.success) {
+        setError(result.error);
       }
     });
   }
@@ -68,6 +71,12 @@ export default function CartItemActions({
             onChange={(event) => setValue(event.target.value)}
             className="h-11 w-24 rounded-lg border border-slate-200 bg-white px-3 text-center text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
           />
+
+          {error && (
+            <p className="max-w-xs text-sm font-medium text-red-600">
+              {error}
+            </p>
+          )}
         </div>
 
         <button
@@ -88,12 +97,6 @@ export default function CartItemActions({
           Usuń
         </button>
       </div>
-
-      {error && (
-        <p className="mt-3 text-sm font-medium text-red-600">
-          {error}
-        </p>
-      )}
     </div>
   );
 }
