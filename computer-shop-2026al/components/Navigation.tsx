@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import GitHubSignInButton from "@/components/GitHubSignInButton";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -60,6 +61,7 @@ export default function Navigation() {
       >
         O projekcie
       </Link>
+      <GitHubSignInButton />
     </nav>
   );
 }
