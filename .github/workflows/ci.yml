@@ -27,6 +27,8 @@ jobs:
       DATABASE_URL: postgresql://shop_user:shop_password@localhost:5432/computer_shop_test?schema=public
       BETTER_AUTH_SECRET: ci-test-secret-ci-test-secret-123456
       BETTER_AUTH_URL: http://localhost:3000
+      GITHUB_CLIENT_ID: ci-test-client-id
+      GITHUB_CLIENT_SECRET: ci-test-client-secret
 
     steps:
       - name: Checkout repository
