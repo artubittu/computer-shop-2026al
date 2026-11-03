@@ -16,6 +16,10 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
+  trustedOrigins: [
+    "https://computer-shop-2026al-lkz8.vercel.app",
+  ],
+
   session: {
     cookieCache: {
       enabled: false,
